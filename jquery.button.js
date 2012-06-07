@@ -1,6 +1,5 @@
 /**
- * A stand-alone widget template
- * no dependencies other than jQuery
+ * An accessible button widget
  * 
  * Author: zzzzBov
  * Version: dev
@@ -8,7 +7,7 @@
 (function ($, undefined) {
     "use strict";
     var widget;
-    widget = 'widget';
+    widget = 'button';
 //------------------------------------------------------------------------------
     //widget constructor
     $[widget] = function (element, options) {
