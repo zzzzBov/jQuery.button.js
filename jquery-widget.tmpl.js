@@ -8,39 +8,38 @@
 (function ($, undefined) {
     "use strict";
     var widget;
-    widget = {
-        //the name to call the widget
-        name: 'widget',
+    widget = 'widget';
+//------------------------------------------------------------------------------
+    //widget constructor
+    $[widget] = function (element, options) {
+        if (!(this instanceof $[widget])) {
+            return new $[widget](element, options);
+        }
+        this._element = $(element);
+        this._options = $.extend({}, $[widget].prototype._options, options);
+        this._create();
+    };
+//------------------------------------------------------------------------------
+    $[widget].prototype = {
         //the widget's default options
-        options: {
-            foo: 'bar'
+        _options: {
         },
-        //uncomment to use _getOption as option accessor
-        //_getOption: function (key) {},
-        //uncomment to use _setOption as option mutator
-        //_setOption: function (key, value) {},
+        _getOption: function (key) {
+            return this._options[key];
+        },
+        _setOption: function (key, value) {
+            this._options[key] = value;
+        },
         //_create called when the widget is first instantiated
         _create: function () {
         },
         //_init called any time the widget is called with no arguments
         _init: function () {
         },
-        _destroy: function () {
-        }
-    };
-//------------------------------------------------------------------------------
-    //check whether arg is a string. Works for both string literal instances and String objects.
-    function isString(arg) {
-        return Object.prototype.toString.call(arg) === '[object String]';
-    }
-//------------------------------------------------------------------------------
-    function Widget(element, options) {
-        //save the element reference on the instance
-        this._element = $(element);
-        //save a copy of the options on the instance
-        this._options = $.extend({}, Widget.prototype.options, options);
-        //create a bulk options mutator
-        this.options = function (optionsMap) {
+        destroy: function () {
+            delete this._element.data()[widget];
+        },
+        options: function (optionsMap) {
             var key,
                 value;
             for (key in optionsMap) {
@@ -49,44 +48,25 @@
                     this.option(key, value);
                 }
             }
-        };
-        //single option accessor/mutator
-        //calls _getOption & _setOption if they've been set on the prototype
-        this.option = function (key, value) {
+        },
+        option: function (key, value) {
             switch (arguments.length) {
             case 1:
-                if ('_getOption' in this) {
-                    value = this._getOption(key);
-                } else {
-                    value = this._options[key];
-                }
-                return value;
+                return this._getOption(key);
             case 2:
-                if ('_setOption' in this) {
-                    this._setOption(key, value);
-                } else {
-                    this._options[key] = value;
-                }
+                this._setOption(key, value);
                 break;
             }
-        };
-        this.widget = function () {
+        },
+        widget: function () {
             return this._element;
-        };
-        //Widget destructor
-        //calls _destroy if it was set on the prototype
-        this.destroy = function () {
-            if ('_destroy' in this) {
-                this._destroy();
-            }
-            delete $(element).data()[widget.name];
-        };
-        //call _create if it was set on the prototype
-        if ('_create' in this) {
-            this._create();
         }
+    };
+//------------------------------------------------------------------------------
+    //check whether arg is a string. Works for both string literal instances and String objects.
+    function isString(arg) {
+        return Object.prototype.toString.call(arg) === '[object String]';
     }
-    Widget.prototype = widget;
 //------------------------------------------------------------------------------
     /**
      * Initializer
@@ -95,10 +75,10 @@
      * Method caller
      * str fnName, ...params?
      */
-    $.fn[widget.name] = function () {
+    $.fn[widget] = function () {
         var args,
             ret;
-        //store the arguments passed to $.fn[widget.name] for use with every element in the selection
+        //store the arguments passed to $.fn[widget] for use with every element in the selection
         args = Array.prototype.slice.call(arguments);
         this.each(function (index, element) {
             var $this,
@@ -108,15 +88,15 @@
                 fn;
             $this = $(this);
             //wgt is the Widget instance
-            wgt = $this.data(widget.name);
+            wgt = $this.data(widget);
             if (wgt) {
                 if (args.length) {
                     //widget was previously instantiated
                     //the first argument must be the method name to call
                     fnName = args[0];
                     if (window.console) {
-                        console.assert(isString(fnName), 'The first parameter of "$.fn.' + widget.name + '" must be a string.');
-                        console.assert(fnName in wgt, '"$.fn.' + widget.name + '" does not contain a "' + fnName + '" function.');
+                        console.assert(isString(fnName), 'The first parameter of "$.fn.' + widget + '" must be a string.');
+                        console.assert(fnName in wgt, '"$.fn.' + widget + '" does not contain a "' + fnName + '" function.');
                     }
                     
                     //check whether the method begins with "_"
@@ -133,42 +113,47 @@
                                 ret = !index ? fn.apply(wgt, args.slice(1)) : ret;
                             } else {
                                 //optionally this could be an accessor/mutator for "public" variables
-                                throw new Error('"' + fnName + '" is not a function.');
+                                //throw new Error('"' + fnName + '" is not a function.');
+                                switch (args.length) {
+                                case 1:
+                                    ret = !index ? fn : ret;
+                                    break;
+                                case 2:
+                                default:
+                                    wgt[fnName] = args[1];
+                                    break;
+                                }
                             }
                         } else {
-                            throw new Error('"' + fnName + '" does not exist in "$.fn.' + widget.name + '".');
+                            throw new Error('"' + fnName + '" does not exist in "$.fn.' + widget + '".');
                         }
                     } else {
                         throw new Error('"' + fnName + '" begins with an underscore. Functions beginning with "_" are considered private and not accessible.');
                     }
                 } else {
-                    if ('_init' in wgt) {
-                        wgt._init();
-                    }
+                    wgt._init();
                 }
             } else {
                 //TODO: add check to prevent initialization on a method call
                 //Widget didn't exist, so create a new instance
                 options = args[0] || {};
-                wgt = new Widget(element, options);
-                $this.data(widget.name, wgt);
-                if ('_init' in wgt) {
-                    wgt._init();
-                }
+                wgt = new $[widget](element, options);
+                $this.data(widget, wgt);
+                wgt._init();
             }
         });
-        //if the return value was set, return that, otherwise $.fn[widget.name] is chainable
+        //if the return value was set, return that, otherwise $.fn[widget] is chainable
         return ret !== undefined ? ret : this;
     };
 //------------------------------------------------------------------------------
     //store the widget.options reference in a publicly accessible location
-    //so that the default options can be changed during runtime
+    //so that the default options can be easily changed during runtime
     //comment out to keep default options private
-    $.fn[widget.name].options = widget.options;
+    $[widget].options = $[widget].prototype._options;
 //------------------------------------------------------------------------------
-    //uncomment to use $(':' + widget.name) expressions
-    //$.expr[':'][widget.name] = function (element, index, matches) {};
-//------------------------------------------------------------------------------
-    //uncomment to use $[widget.name]()
-    //$[widget.name] = function () {};
+    $.expr[':'][widget] = function (element, index, matches) {
+        var $this;
+        $this = $(this);
+        return $this.data(widget) instanceof $[widget];
+    };
 }(jQuery));
