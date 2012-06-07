@@ -163,42 +163,39 @@
                     
                     //check whether the method begins with "_"
                     //variables prefixed with "_" are considered "private" and not accessible in this manner
-                    if (fnName.indexOf('_')) {
-                    //some alternatives
-                    //if (fnName[0] !== '_') {
-                    //if (!/^_/.test(fnName)) {
-                    //if (/^[^_]/.test(fnName)) {
-                        //check whether the method actually exists on the Widget instance
-                        //you can't call methods that don't exist
-                        if (fnName in wgt) {
-                            fn = wgt[fnName];
-                            //check whether the method is actually a function
-                            //you can only call functions
-                            if ($.isFunction(fn)) {
-                                //stores the return value for the first element only
-                                if (!index) {
-                                    ret = fn.apply(wgt, args.slice(1));
-                                } else {
-                                    fn.apply(wgt, args.slice(1));
-                                }
-                            } else {
-                                //optionally this could be an accessor/mutator for "public" variables
-                                //throw new Error('"' + fnName + '" is not a function.');
-                                switch (args.length) {
-                                case 1:
-                                    ret = !index ? fn : ret;
-                                    break;
-                                case 2:
-                                default:
-                                    wgt[fnName] = args[1];
-                                    break;
-                                }
-                            }
+                    //regexp used so that developers can define a custom "private" prefix
+                    if (/^_/.test(fnName)) {
+                        throw new Error('"' + fnName + '" begins with an underscore. Functions beginning with "_" are considered private and not accessible.');
+                    }
+                    
+                    //check whether the method actually exists on the Widget instance
+                    //you can't call methods that don't exist
+                    if (!(fnName in wgt)) {
+                        throw new Error('"' + fnName + '" does not exist in "$.fn.' + widget + '".');
+                    }
+                    
+                    fn = wgt[fnName];
+                    //check whether the method is actually a function
+                    //you can only call functions
+                    if ($.isFunction(fn)) {
+                        //stores the return value for the first element only
+                        if (!index) {
+                            ret = fn.apply(wgt, args.slice(1));
                         } else {
-                            throw new Error('"' + fnName + '" does not exist in "$.fn.' + widget + '".');
+                            fn.apply(wgt, args.slice(1));
                         }
                     } else {
-                        throw new Error('"' + fnName + '" begins with an underscore. Functions beginning with "_" are considered private and not accessible.');
+                        //optionally this could be an accessor/mutator for "public" variables
+                        //throw new Error('"' + fnName + '" is not a function.');
+                        switch (args.length) {
+                        case 1:
+                            ret = !index ? fn : ret;
+                            break;
+                        case 2:
+                        default:
+                            wgt[fnName] = args[1];
+                            break;
+                        }
                     }
                 } else {
                     wgt._init();
