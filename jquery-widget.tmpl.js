@@ -16,28 +16,83 @@
             return new $[widget](element, options);
         }
         this._element = $(element);
-        this._options = $.extend({}, $[widget].prototype._options, options);
+        this._options = {};
         this._create();
+        this.options($.extend({}, $[widget].prototype._options, options));
     };
 //------------------------------------------------------------------------------
     $[widget].prototype = {
         //the widget's default options
         _options: {
+            disabled: false
         },
+        //accessor for _options
         _getOption: function (key) {
             return this._options[key];
         },
+        //mutator for _options
         _setOption: function (key, value) {
-            this._options[key] = value;
+            switch (key) {
+            case 'disabled':
+                if (value) {
+                    this.disable();
+                } else {
+                    this.enable();
+                }
+                break;
+            default:
+                this._options[key] = value;
+                break;
+            }
         },
         //_create called when the widget is first instantiated
+        //_options have not yet been set
         _create: function () {
+            this._original = {
+                'aria-disabled':    this._element.attr('aria-disabled'),
+                'disabled':         this._element.attr('disabled'),
+                'role':             this._element.attr('role'),
+                'tabindex':         this._element.attr('tabindex')
+            };
+            this._element.attr({
+                'role': widget,
+                'tabindex': 0
+            });
         },
-        //_init called any time the widget is called with no arguments
+        //_init called as the constructor,
+        //or any time the widget is called with no arguments
+        //_options have been set
         _init: function () {
         },
+        //destroy is the destructor method
+        //remove all attributes, classes, object references, and bound events
         destroy: function () {
+            var attr,
+                attrVal;
+            //revert to original attribute values
+            for (attr in this._original) {
+                attrVal = this._original[attr];
+                if (attrVal === undefined) {
+                    attrVal = null;
+                }
+                this._element.attr(attr, attrVal);
+            }
+            //remove the widget reference
             delete this._element.data()[widget];
+        },
+        enable: function () {
+            this._element.attr({
+                'aria-disabled': 'false',
+                'disabled': null
+            });
+            this._options.disabled = false;
+        },
+        disable: function () {
+            this._element.attr({
+                'aria-disabled': 'true',
+                'disabled': 'disabled'
+            });
+            this._options.disabled = true;
         },
         options: function (optionsMap) {
             var key,
@@ -63,9 +118,16 @@
         }
     };
 //------------------------------------------------------------------------------
+    //Lib Functions
     //check whether arg is a string. Works for both string literal instances and String objects.
     function isString(arg) {
         return Object.prototype.toString.call(arg) === '[object String]';
+    }
+    //declare an assertion
+    function assert(assertion, message) {
+        if (window.console && console.assert) {
+            console.assert(assertion, message);
+        }
     }
 //------------------------------------------------------------------------------
     /**
@@ -94,14 +156,18 @@
                     //widget was previously instantiated
                     //the first argument must be the method name to call
                     fnName = args[0];
-                    if (window.console) {
-                        console.assert(isString(fnName), 'The first parameter of "$.fn.' + widget + '" must be a string.');
-                        console.assert(fnName in wgt, '"$.fn.' + widget + '" does not contain a "' + fnName + '" function.');
-                    }
+                    
+                    //a couple assertions for debugging
+                    assert(isString(fnName), 'The first parameter of "$.fn.' + widget + '" must be a string.');
+                    assert(fnName in wgt, '"$.fn.' + widget + '" does not contain a "' + fnName + '" function.');
                     
                     //check whether the method begins with "_"
                     //variables prefixed with "_" are considered "private" and not accessible in this manner
-                    if (/^[^_]/.test(fnName)) {
+                    if (fnName.indexOf('_')) {
+                    //some alternatives
+                    //if (fnName[0] !== '_') {
+                    //if (!/^_/.test(fnName)) {
+                    //if (/^[^_]/.test(fnName)) {
                         //check whether the method actually exists on the Widget instance
                         //you can't call methods that don't exist
                         if (fnName in wgt) {
@@ -110,7 +176,11 @@
                             //you can only call functions
                             if ($.isFunction(fn)) {
                                 //stores the return value for the first element only
-                                ret = !index ? fn.apply(wgt, args.slice(1)) : ret;
+                                if (!index) {
+                                    ret = fn.apply(wgt, args.slice(1));
+                                } else {
+                                    fn.apply(wgt, args.slice(1));
+                                }
                             } else {
                                 //optionally this could be an accessor/mutator for "public" variables
                                 //throw new Error('"' + fnName + '" is not a function.');
@@ -152,8 +222,6 @@
     $[widget].options = $[widget].prototype._options;
 //------------------------------------------------------------------------------
     $.expr[':'][widget] = function (element, index, matches) {
-        var $this;
-        $this = $(this);
-        return $this.data(widget) instanceof $[widget];
+        return $(element).data(widget) instanceof $[widget];
     };
 }(jQuery));
