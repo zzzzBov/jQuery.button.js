@@ -1,7 +1,5 @@
-#jQuery-widget.tmpl.js
+# jQuery.button.js
 
-This JavaScript file is not a jQuery plugin in and of itself.
-Instead, it's a starter file for widget development.
-The advantage to a starter file over a plugin is that the starter file is completely self-encapsulating.
-Any code changes that are needed can be performed within the code, and they wont leak into other plugins
-(such as the conflicts between the jQuery UI and jQuery Mobile `$.widget` factory functions).
+`jQuery.button.js` is a button widget based off of the [`jQuery-widget.tmpl.js` project][1].
+
+[1]: https://github.com/zzzzBov/jQuery-widget.tmpl.js
