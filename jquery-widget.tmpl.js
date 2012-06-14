@@ -24,7 +24,8 @@
     $[widget].prototype = {
         //the widget's default options
         _options: {
-            disabled: false
+            disabled: false,
+            tabindex: true
         },
         //accessor for _options
         _getOption: function (key) {
@@ -32,18 +33,34 @@
         },
         //mutator for _options
         _setOption: function (key, value) {
+            var options;
+            options = this._options;
             switch (key) {
             case 'disabled':
+                value = !!value;
                 if (value) {
                     this.disable();
                 } else {
                     this.enable();
                 }
                 break;
+            case 'tabindex':
+                //validate value is correct
+                if (value === true || value === false) {
+                    value = value ? 0 : -1;
+                }
+                //cast value to number
+                value = +value;
+                if (value < -1) {
+                    value = -1;
+                }
+                this._element.attr('tabindex', options.disabled ? -1 : value);
+                break;
             default:
-                this._options[key] = value;
+                //by default, do nothing
                 break;
             }
+            options[key] = value;
         },
         //_create called when the widget is first instantiated
         //_options have not yet been set
@@ -63,6 +80,11 @@
         //or any time the widget is called with no arguments
         //_options have been set
         _init: function () {
+            var options;
+            options = this._options;
+            this._element.attr({
+                'tabindex': options.disabled ? -1 : options.tabindex
+            });
         },
         //destroy is the destructor method
         //remove all attributes, classes, object references, and bound events
@@ -83,16 +105,16 @@
         enable: function () {
             this._element.attr({
                 'aria-disabled': 'false',
-                'disabled': null
+                'disabled': null,
+                'tabindex': this._options.tabindex
             });
-            this._options.disabled = false;
         },
         disable: function () {
             this._element.attr({
                 'aria-disabled': 'true',
-                'disabled': 'disabled'
+                'disabled': 'disabled',
+                'tabindex': -1
             });
-            this._options.disabled = true;
         },
         options: function (optionsMap) {
             var key,
