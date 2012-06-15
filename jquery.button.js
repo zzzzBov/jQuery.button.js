@@ -21,6 +21,15 @@
     };
 //------------------------------------------------------------------------------
     $[widget].prototype = {
+        //the widget's state classes
+        _classes: {
+            disabled:   'is-disabled',
+            enabled:    'is-enabled',
+            focused:    'is-focused',
+            blurred:    'is-blurred',
+            over:       'is-over',
+            out:        'is-out'
+        },
         //the widget's default options
         _options: {
             disabled: false,
@@ -64,16 +73,29 @@
         //_create called when the widget is first instantiated
         //_options have not yet been set
         _create: function () {
+            var c,
+                element,
+                focused;
+            c = this._classes;
+            element = this._element;
+            focused = element.is(':focus');
             this._original = {
                 'aria-disabled':    this._element.attr('aria-disabled'),
                 'disabled':         this._element.attr('disabled'),
                 'role':             this._element.attr('role'),
                 'tabindex':         this._element.attr('tabindex')
             };
-            this._element.attr({
+            element.attr({
                 'role': widget,
                 'tabindex': 0
-            });
+            }).on({
+                'focus.widget':         $.proxy(this, '_focusHandler'),
+                'blur.widget':          $.proxy(this, '_blurHandler'),
+                'mouseenter.widget':    $.proxy(this, '_mouseenterHandler'),
+                'mouseleave.widget':    $.proxy(this, '_mouseleaveHandler')
+            }).addClass(c.out)
+                .toggleClass(c.focused, focused)
+                .toggleClass(c.blurred, !focused);
         },
         //_init called as the constructor,
         //or any time the widget is called with no arguments
@@ -89,31 +111,62 @@
         //remove all attributes, classes, object references, and bound events
         destroy: function () {
             var attr,
-                attrVal;
+                attrVal,
+                element,
+                original,
+                classes,
+                classList;
+            element = this._element;
+            original = this._original;
+            classes = this._classes;
+            
             //revert to original attribute values
-            for (attr in this._original) {
-                attrVal = this._original[attr];
+            for (attr in original) {
+                attrVal = original[attr];
                 if (attrVal === undefined) {
                     attrVal = null;
                 }
-                this._element.attr(attr, attrVal);
+                element.attr(attr, attrVal);
             }
+            
+            //remove classes
+            classList = [];
+            for (key in classes) {
+                classList.push(classes[key]);
+            }
+            element.removeClass(classList.join(' '));
+            
+            //unbind events
+            element.off('.widget');
+            
             //remove the widget reference
-            delete this._element.data()[widget];
+            delete element.data()[widget];
         },
         enable: function () {
-            this._element.attr({
+            var element,
+                options,
+                classes;
+            element = this._element;
+            options = this._options;
+            classes = this._classes;
+            element.attr({
                 'aria-disabled': 'false',
                 'disabled': null,
-                'tabindex': this._options.tabindex
-            });
+                'tabindex': options.tabindex
+            }).addClass(classes.enabled)
+                .removeClass(classes.disabled);
         },
         disable: function () {
-            this._element.attr({
+            var element,
+                classes;
+            element = this._element;
+            classes = this._classes;
+            element.attr({
                 'aria-disabled': 'true',
                 'disabled': 'disabled',
                 'tabindex': -1
-            });
+            }).addClass(classes.disabled)
+                .removeClass(classes.enabled);
         },
         options: function (optionsMap) {
             var key,
@@ -136,6 +189,26 @@
         },
         widget: function () {
             return this._element;
+        },
+        _focusHandler: function (e) {
+            var classes;
+            classes = this._classes;
+            this._element.addClass(classes.focused).removeClass(classes.blurred);
+        },
+        _blurHandler: function (e) {
+            var classes;
+            classes = this._classes;
+            this._element.addClass(classes.blurred).removeClass(classes.focused);
+        },
+        _mouseenterHandler: function (e) {
+            var classes;
+            classes = this._classes;
+            this._element.addClass(classes.over).removeClass(classes.out);
+        },
+        _mouseleaveHandler: function (e) {
+            var classes;
+            classes = this._classes;
+            this._element.addClass(classes.out).removeClass(classes.over);
         }
     };
 //------------------------------------------------------------------------------
