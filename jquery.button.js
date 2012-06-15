@@ -89,10 +89,10 @@
                 'role': widget,
                 'tabindex': 0
             }).on({
-                'focus.widget':         $.proxy(this, '_focusHandler'),
-                'blur.widget':          $.proxy(this, '_blurHandler'),
-                'mouseenter.widget':    $.proxy(this, '_mouseenterHandler'),
-                'mouseleave.widget':    $.proxy(this, '_mouseleaveHandler')
+                'focus.button':         $.proxy(this, '_focusHandler'),
+                'blur.button':          $.proxy(this, '_blurHandler'),
+                'mouseenter.button':    $.proxy(this, '_mouseenterHandler'),
+                'mouseleave.button':    $.proxy(this, '_mouseleaveHandler')
             }).addClass(c.out)
                 .toggleClass(c.focused, focused)
                 .toggleClass(c.blurred, !focused);
@@ -137,7 +137,7 @@
             element.removeClass(classList.join(' '));
             
             //unbind events
-            element.off('.widget');
+            element.off('.button');
             
             //remove the widget reference
             delete element.data()[widget];
