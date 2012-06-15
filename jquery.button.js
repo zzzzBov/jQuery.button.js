@@ -89,13 +89,21 @@
                 'role': widget,
                 'tabindex': 0
             }).on({
+                'click.button':         $.proxy(this, '_clickHandler'),
+                'dblclick.button':      $.proxy(this, '_dblClickHandler'),
+                'mousedown.button':     $.proxy(this, '_mouseDownHandler'),
+                'mouseup.button':       $.proxy(this, '_mouseUpHandler'),
                 'focus.button':         $.proxy(this, '_focusHandler'),
                 'blur.button':          $.proxy(this, '_blurHandler'),
                 'mouseenter.button':    $.proxy(this, '_mouseenterHandler'),
-                'mouseleave.button':    $.proxy(this, '_mouseleaveHandler')
+                'mouseleave.button':    $.proxy(this, '_mouseleaveHandler'),
+                'keydown.button':       $.proxy(this, '_keyDownHandler'),
+                'keyup.button':         $.proxy(this, '_keyUpHandler'),
+                'keypress.button':      $.proxy(this, '_keyPressHandler')
             }).addClass(c.out)
                 .toggleClass(c.focused, focused)
                 .toggleClass(c.blurred, !focused);
+            $(document).on('mouseup.button', $.proxy(this, '_documentMouseUpHandler'));
         },
         //_init called as the constructor,
         //or any time the widget is called with no arguments
@@ -138,7 +146,7 @@
             
             //unbind events
             element.off('.button');
-            
+            $(document).off('mouseup.button', this._documentMouseUpHandler);
             //remove the widget reference
             delete element.data()[widget];
         },
@@ -190,6 +198,18 @@
         widget: function () {
             return this._element;
         },
+        _clickHandler: function (e) {
+            
+        },
+        _dblClickHandler: function (e) {
+            
+        },
+        _mouseDownHandler: function (e) {
+            
+        },
+        _mouseUpHandler: function (e) {
+            
+        },
         _focusHandler: function (e) {
             var classes;
             classes = this._classes;
@@ -209,6 +229,15 @@
             var classes;
             classes = this._classes;
             this._element.addClass(classes.out).removeClass(classes.over);
+        },
+        _keyDownHandler: function (e) {
+            
+        },
+        _keyUpHandler: function (e) {
+            
+        },
+        _keyPressHandler: function (e) {
+            
         }
     };
 //------------------------------------------------------------------------------
